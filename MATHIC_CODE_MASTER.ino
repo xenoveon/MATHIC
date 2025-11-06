@@ -2,17 +2,16 @@
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 #include <Servo.h>
-#include <EEPROM.h>
 
 
 
 struct Message {
-
   uint8_t command;
   int16_t value;
 };
+
 #define NUM_SETS 3
-#define EEPROM_ADDR_CURRSET 0
+// #define EEPROM_ADDR_CURRSET 0
 
 #define NOTE_C4 262
 #define NOTE_D4 294
@@ -68,7 +67,7 @@ const int buzzerPin = A2;
 const int redLed = 11;
 const int greenLed = 12;
 const int blueLed = 13;
-// const int servoPin = 13;
+
 
 // FEEL FREE TO CHANGE THE QUESTIONS INSIDE THE QUOTATION MARKS (INPUT THE CORRECT ANSWERS IN "const short answers[] line149)
 const char q11[] PROGMEM = "Find the remainder of 12 when divided by 7";              //5
@@ -222,6 +221,8 @@ void beep1() {
 void setup() {
 
   Wire.begin();  // master
+  Wire.setWireTimeout(1000);  // 1000ms timeout to prevent freezing
+
   // Wire.onReceive(receiveEvent); // setup receive handler
   pinMode(A3, OUTPUT);
 
@@ -248,18 +249,18 @@ void setup() {
   lcd.setCursor(0, 1);
   lcd.print("      PUZZLER! ");  // Display text on the screen
 
-  delay(2000);
+  delay(1500);
   lcd.clear();
   lcd.setCursor(0, 0);
   beep1();
   lcd.print(" MODULAR ARITHMETIC");  // Display text on the screen
   lcd.setCursor(0, 1);
   lcd.print("     TECHNOLOGY ");  // Display text on the screen
-  delay(2000);
+  delay(1000);
   lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print("     HARNESSING");  // Display text on the screen
-  delay(2000);
+  delay(1000);
   lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print("     INTERACTIVE");  // Display text on the screen
@@ -271,7 +272,7 @@ void setup() {
 
 
   pinMode(buzzerPin, OUTPUT);  // Set pin 10 as an output
-  pinMode(redLed, OUTPUT);     // Set pin 12 as an output
+  pinMode(redLed, OUTPUT);     // Set pin 12 as an output 
   pinMode(greenLed, OUTPUT);   // Set pin 11 as an output
   pinMode(blueLed, OUTPUT);    // Set pin 12 as an output
   pinMode(A2, OUTPUT);
@@ -530,11 +531,20 @@ void resetAll() {
   nextSet();
 }
 
-// Fisher–Yates Shuffle: randomizes any integer array in place
+// // Fisher–Yates Shuffle: randomizes any integer array in place
+// void shuffleArray(int arr[], int len) {
+//   if (len <= 1) return;  // nothing to shuffle
+//   for (int i = len - 1; i > 0; i--) {
+//     int j = random(i + 1);  // random index in [0, i]
+//     int temp = arr[i];
+//     arr[i] = arr[j];
+//     arr[j] = temp;
+//   }
+// }
+
 void shuffleArray(int arr[], int len) {
-  if (len <= 1) return;  // nothing to shuffle
   for (int i = len - 1; i > 0; i--) {
-    int j = random(i + 1);  // random index in [0, i]
+    int j = random(i + 1);  // Random index between 0 and i
     int temp = arr[i];
     arr[i] = arr[j];
     arr[j] = temp;
@@ -710,12 +720,26 @@ void correctAnswer() {
         mean2 = (sumAnswer / 3);
 
       sumAnswer = 0;
-      currSet = setNumbers[setIndex];
-      setIndex++;
-      if (setIndex >= NUM_SETS) {
-        setIndex = 0;
-        shuffleArray(setNumbers, NUM_SETS);
+      
+      // currSet value at this point is 1, 2 or 3
+
+      int nextSet = random(1, 4); // get random set (value of 1, 2 or 3)
+      if (nextSet == currSet) { // if the next set is same on the previous(currSet)
+        if (currSet == 3) { // if 3, then set to 1
+          currSet = 1;
+        } else { // currSet is 1 or 2          
+          currSet++; // just increment (add 1)
+        }
+      } else {
+        currSet = nextSet;
       }
+      
+      // currSet = setNumbers[setIndex];
+      // setIndex++;
+      // if (setIndex >= NUM_SETS) {
+      //   setIndex = 0;
+      //   shuffleArray(setNumbers, NUM_SETS);
+      // }
 
       currLevel = 1;
       currStage++;
